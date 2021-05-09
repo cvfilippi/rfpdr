@@ -1,4 +1,3 @@
-#####
 # browseURL("https://github.com/cvfilippi/rfpdr")
 
 ## required package: 
@@ -6,45 +5,27 @@ library(protr)
 library(randomForest)
 
 ## choose working directory:
-path = "~/<...>"
+path = "<...>"
 
 setwd(path)
 
 ## choose query fasta file(s):
-files = "<...>.fas"
+file = "<...>.fasta(.gz)"
 
-# list.files(pattern = ".fa$|.fas$|.fasta$")
-
-## choose the best RD-RFPDR model,
+## choose the best RFPDR model,
 ## from environment or as RDS:
-rfpdr = "<...>.RDS"
-## for example, model for 1:10 ratio:
-# rfpdr = "rd-rfpdr_1vs10.RDS"
+rfpdr = "rfpdr.RDS"
+model <- readRDS(rfpdr)
 
-# list.files(pattern = ".RDS$")
-
-#####
-
-query <- NULL
-
-for(i in files){
-  query[[i]] <- readFASTA(i)
-}
+query <- readFASTA(file)
 
 ## trim C-terminus "*":
 for(i in names(query)){
-  for(j in names(query[[i]])){
-    query[[i]][[j]] <- gsub(".\\*$", "", query[[i]][[j]])
-  }
+  query[[i]] <- gsub(".\\*$", "", query[[i]])
 }
 
 ## protcheck
-check <- NULL
-for(i in names(query)){
-  check[[i]] <- query[[i]][sapply(query[[i]], protcheck)]
-}
-
-#####
+check <- query[sapply(query[[i]], protcheck)]
 
 newlist <- NULL
 
@@ -52,148 +33,110 @@ newlist <- NULL
 ## extractAAC
 newlist[["aac"]] <- NULL
 for(i in names(check)){
-  newlist[["aac"]][[i]] <- NULL
-  for(j in names(check[[i]])){
-    newlist[["aac"]][[i]][[j]] <- lapply(check[[i]][[j]], extractAAC)
-  }
+  newlist[["aac"]][[i]] <- lapply(check[[i]], extractAAC)
 }
 
 ## Dipeptide composition
 ## extractDC
 newlist[["dc"]] <- NULL
 for(i in names(check)){
-  newlist[["dc"]][[i]] <- NULL
-  for(j in names(check[[i]])){
-    newlist[["dc"]][[i]][[j]] <- lapply(check[[i]][[j]], extractDC)
-  }
+  newlist[["dc"]][[i]] <- lapply(check[[i]], extractDC)
 }
 
 ## Tripeptide composition
 ## extractTC
 newlist[["tc"]] <- NULL
 for(i in names(check)){
-  newlist[["tc"]][[i]] <- NULL
-  for(j in names(check[[i]])){
-    newlist[["tc"]][[i]][[j]] <- lapply(check[[i]][[j]], extractTC)
-  }
+  newlist[["tc"]][[i]] <- lapply(check[[i]], extractTC)
 }
 
 ## Normalized Moreau-Broto autocorrelation
 ## extractMoreauBroto
 newlist[["mb"]] <- NULL
 for(i in names(check)){
-  newlist[["mb"]][[i]] <- NULL
-  for(j in names(check[[i]])){
-    newlist[["mb"]][[i]][[j]] <- lapply(check[[i]][[j]], extractMoreauBroto)
-  }
+  newlist[["mb"]][[i]] <- lapply(check[[i]], extractMoreauBroto)
 }
 
 ## Moran autocorrelation
 ## extractMoran
 newlist[["m"]] <- NULL
 for(i in names(check)){
-  newlist[["m"]][[i]] <- NULL
-  for(j in names(check[[i]])){
-    newlist[["m"]][[i]][[j]] <- lapply(check[[i]][[j]], extractMoran)
-  }
+  newlist[["m"]][[i]] <- lapply(check[[i]], extractMoran)
 }
 
 ## Geary autocorrelation
 ## extractGeary
 newlist[["g"]] <- NULL
 for(i in names(check)){
-  newlist[["g"]][[i]] <- NULL
-  for(j in names(check[[i]])){
-    newlist[["g"]][[i]][[j]] <- lapply(check[[i]][[j]], extractGeary)
-  }
+  newlist[["g"]][[i]] <- lapply(check[[i]], extractGeary)
 }
 
 ## Composition
 ## extractCTDC
 newlist[["ctdc"]] <- NULL
 for(i in names(check)){
-  newlist[["ctdc"]][[i]] <- NULL
-  for(j in names(check[[i]])){
-    newlist[["ctdc"]][[i]][[j]] <- lapply(check[[i]][[j]], extractCTDC)
-  }
+  newlist[["ctdc"]][[i]] <- lapply(check[[i]], extractCTDC)
 }
 
 ## Transition
 ## extractCTDT
 newlist[["ctdt"]] <- NULL
 for(i in names(check)){
-  newlist[["ctdt"]][[i]] <- NULL
-  for(j in names(check[[i]])){
-    newlist[["ctdt"]][[i]][[j]] <- lapply(check[[i]][[j]], extractCTDT)
-  }
+  newlist[["ctdt"]][[i]] <- lapply(check[[i]], extractCTDT)
 }
 
 ## Distribution
 ## extractCTDD
 newlist[["ctdd"]] <- NULL
 for(i in names(check)){
-  newlist[["ctdd"]][[i]] <- NULL
-  for(j in names(check[[i]])){
-    newlist[["ctdd"]][[i]][[j]] <- lapply(check[[i]][[j]], extractCTDD)
-  }
+    newlist[["ctdd"]][[i]] <- lapply(check[[i]], extractCTDD)
 }
 
 ## Conjoint triad descriptors
 ## extractCTriad
 newlist[["t"]] <- NULL
 for(i in names(check)){
-  newlist[["t"]][[i]] <- NULL
-  for(j in names(check[[i]])){
-    newlist[["t"]][[i]][[j]] <- lapply(check[[i]][[j]], extractCTriad)
-  }
+  newlist[["t"]][[i]] <- newlist[["t"]][[i]] <- lapply(check[[i]], extractCTriad)
 }
 
-#####
+# save(newlist, file="newlist.RData")
 
 newdata <- NULL
-
-for(i in names(newlist)[]){
+for(i in names(newlist)){
   newdata[[i]] <- NULL
   for(j in names(check)){
-    newdata[[i]][[j]] <- NULL
+    newdata[[i]] <- NULL
     temp <- NULL
-    temp <- cbind(temp, t(do.call(data.frame, newlist[[i]][[j]])))
-    names(temp) <- names(newlist[[i]][[j]][[1]])
+    temp <- cbind(temp, t(do.call(data.frame, newlist[[i]])))
+    names(temp) <- names(newlist[[i]][[1]])
     rownames(temp) <- names(check[[j]])
-    newdata[[i]][[j]] <- temp
+    newdata[[i]] <- temp
   }
 }
 
-#####
+# save(data, file="newdata.RData")
 
-newbind <- NULL
-
-for(i in names(newdata[[1]])){
-  # newbind[[i]] <- NULL
-  temp <- newdata[[1]][[i]]
-  for(j in 2:length(newdata)){
-    temp <- cbind(temp, as.data.frame(newdata[[j]][[i]]))
-  }
-  newbind[[i]] <- temp
+newfeats <- newdata[[1]]
+for(i in 2:length(newdata)){
+  newfeats <- cbind(newfeats, as.data.frame(newdata[[i]]))
 }
+newfeats <- data.frame(newfeats, "length"=sapply(check,nchar))
 
-#####
+save(newfeats, file="newfeatures.RData")
+# write.table(newfeats, "newfeatures.csv", sep=",",
+#             quote=FALSE, row.names=FALSE, col.names=TRUE)
 
-model <- readRDS(rfpdr)
+## predicting!
 
-predictions <- NULL
+keep <- try(read.table("keep.txt")$V1)
+new <- newfeats[, keep]
+dim(new)
+colnames(new) <- rownames(model$importance)
+                 
+predictions <- data.frame("name"=names(check),
+                          "prediction"=as.character(predict(model, new)))
+predictions
+write.table(predictions,paste(file,".rfpdr.tsv"),sep="\t",
+            quote=FALSE,row.names=FALSE,col.names=TRUE)
 
-for(i in names(newbind)){
-  keep <- try(read.table("keep.txt")$V1)
-  copy <- newbind[[i]]
-  copy <- copy[, c(1:(20 + 20^2),
-                   which(names(newbind[[i]]) %in% keep),
-                   (20 + 20^2 + 20^3 + 1):ncol(newbind[[i]]))]
-  dim(copy)
-  colnames(copy) <- rownames(model$importance)
-                   
-  predictions[[i]] <- as.character(predict(model, copy))
-                   
-}
-
-lapply(predictions, table)
+table(predictions$prediction)
